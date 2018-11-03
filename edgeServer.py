@@ -11,7 +11,8 @@ class EdgeServer:
         self.totalSimulateTime = totalSimulationTime
         self.pendingPackets = []
         self.isBusy = [False for _ in range(totalSimulationTime)]
-
+        self.policyList = ('FIFO', 'FCLS')
+        self.policy = 'FIFO'
 
     def run(self, time):
         if not self.isServerBusy(time) and self.pendingPackets:
@@ -21,16 +22,31 @@ class EdgeServer:
         self.pendingPackets.append(packet)
 
 
-    def getNextPacket(self):
+    def FIFO(self):
         return self.pendingPackets.pop(0)
+
+    def FCLS(self):
+        return self.pendingPackets.pop()
+
+    def getNextPacket(self, policy):
+        if policy == 'FIFO':
+            return self.FIFO()
+        elif policy == 'FCLS':
+            return self.FCLS()
+
+        return
+
 
     def sendPacket(self, destination, packet):
         self.channel.forwardPacket(destination, packet)
 
     def process(self, time):
-        nextPacket = self.getNextPacket()
+        nextPacket = self.getNextPacket(self.policy)
+
         processTime = int(np.random.exponential(scale=2, size=1)[0]) # ms
+
         self.reserveServer([time+x for x in range(processTime)])
+
         updatePacket = Packet(nextPacket.packetId, self.serverId, nextPacket.srcId, nextPacket.size, 1, time+processTime)
         self.sendPacket(nextPacket.srcId, updatePacket)
 
