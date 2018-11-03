@@ -15,19 +15,25 @@ class SelfCar:
         self.requestId = 0
         self.channel = channel
         self.updates = []
+        self.latencies = {}
         self.sendSlots = set()
         time = startTime
         while time < endTime:
             self.sendSlots.add(time)
             time += sendingInterval
 
-    def sendPacket(self, serverId):
-        packet = self.generatePacket(serverId)
-        self.channel.forwardPacket(serverId, packet)
-        self.requestId += 1
+    def run(self, serverId, timeSlot):
+        if timeSlot in self.sendSlots:
+            self.sendPacket(serverId, timeSlot)
 
-    def generatePacket(self, serverId):
-        return Packet(self.requestId, self.carId, serverId, self.calculatePacketSize(self.resolution), 0, self.time)
+    def sendPacket(self, serverId, timeSlot):
+        packet = self.generatePacket(serverId, timeSlot)
+        self.updateLatency(packet)
+        self.channel.forwardPacket(serverId, packet)
+
+    def generatePacket(self, serverId, time):
+        self.requestId += 1
+        return Packet(self.requestId, self.carId, serverId, self.calculatePacketSize(self.resolution), 0, time)
 
     def calculatePacketSize(self, resolution):
         #MB
@@ -42,8 +48,16 @@ class SelfCar:
 
     def receivePacket(self, packet):
         self.updates.append(packet)
+        self.updateLatency(packet)
 
+    def updateLatency(self, packet):
+        packetId, endTime = packet.packetId, packet.timestamp
+        if packetId not in self.latencies:
+            self.latencies[packetId] = [endTime, endTime, endTime]
+            return
+        startTime = self.latencies[packetId][0]
+        self.latencies[packetId][1] = endTime
+        self.latencies[packetId][2] = endTime - startTime
 
-    def run(self, timeSlot, serverId):
-        if timeSlot in self.sendSlots:
-            self.sendPacket(serverId)
+    def getEnd2EndLatency(self):
+        return [x[2] for x in self.latencies.values()]

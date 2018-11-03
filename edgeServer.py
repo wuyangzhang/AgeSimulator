@@ -28,11 +28,11 @@ class EdgeServer:
         self.channel.forwardPacket(destination, packet)
 
     def process(self, time):
-        packet = self.getNextPacket()
-        processTime = int(np.random.exponential(scale=20, size=1)[0]) # ms
+        nextPacket = self.getNextPacket()
+        processTime = int(np.random.exponential(scale=2, size=1)[0]) # ms
         self.reserveServer([time+x for x in range(processTime)])
-        update = Packet(packet.packetId, self.serverId, packet.srcId, packet.size, 1, time+processTime)
-        self.sendPacket(packet.srcId, update)
+        updatePacket = Packet(nextPacket.packetId, self.serverId, nextPacket.srcId, nextPacket.size, 1, time+processTime)
+        self.sendPacket(nextPacket.srcId, updatePacket)
 
 
     def isServerBusy(self, time):
@@ -40,4 +40,5 @@ class EdgeServer:
 
     def reserveServer(self, times):
         for time in times:
-            self.isBusy[time] = True
+            if time < len(self.isBusy):
+                self.isBusy[time] = True
