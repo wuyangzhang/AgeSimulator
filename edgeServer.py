@@ -28,11 +28,33 @@ class EdgeServer:
     def FCLS(self):
         return self.pendingPackets.pop()
 
+    def minAge(self):
+        nextPacket = None
+        minAge = float('inf')
+        for packet in self.pendingPackets:
+            if packet.age < minAge:
+                minAge = packet.age
+                nextPacket = packet
+        return nextPacket
+
+    def maxAge(self):
+        nextPacket = None
+        maxAge = -float('inf')
+        for packet in self.pendingPackets:
+            if packet.age > maxAge:
+                maxAge = packet.age
+                nextPacket = packet
+        return nextPacket
+
     def getNextPacket(self, policy):
         if policy == 'FIFO':
             return self.FIFO()
         elif policy == 'FCLS':
             return self.FCLS()
+        elif policy == 'maxAge':
+            return self.maxAge()
+        elif policy == 'minAge':
+            return self.minAge()
 
         return
 

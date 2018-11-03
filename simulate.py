@@ -2,9 +2,9 @@ import random
 from channel import Channel
 from edgeServer import EdgeServer
 from SelfCar import SelfCar
+from PlotHelper import plotSingleCurve
 
-
-carNum = 10
+carNum = 1
 totalSimulateTime = 5 * 60 * 1000 # 5 min
 
 resolutions = [720, 1080, 2000, 4000]
@@ -38,6 +38,7 @@ for time in range(totalSimulateTime):
         car.run(serverId, time)
     edgeServer.run(time)
 
-
+res = cars[0].getEnd2EndLatency()
+plotSingleCurve(res)
 for car in cars:
     print(car.getEnd2EndLatency())
