@@ -14,7 +14,7 @@ class EdgeServer:
 
 
     def run(self, time):
-        if not self.isServerBusy(time):
+        if not self.isServerBusy(time) and self.pendingPackets:
             self.process(time)
 
     def receivePacket(self, packet):

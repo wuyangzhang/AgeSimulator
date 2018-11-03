@@ -19,7 +19,6 @@ for i in range(carNum):
 
     car = SelfCar(i, startTime = random.randint(0, totalSimulateTime // 5) ,
                   endTime = random.randint(totalSimulateTime - totalSimulateTime // 5, totalSimulateTime),
-                  totalSimulationTime = totalSimulateTime,
                   resolution = random.choice(resolutions),
                   speed = random.choice(speeds),
                   sendingInterval = 1000//random.choice(intervals),
@@ -32,7 +31,9 @@ serverId = 10001
 edgeServer = EdgeServer(serverId, channel, totalSimulateTime)
 instanceIdMapping[serverId] = edgeServer
 channel.setInstanceMap(instanceIdMapping)
-cars[0].run(serverId)
 
-# for car in cars:
-#     car.run(edgeServer.serverId)
+# start simulate!
+for time in range(totalSimulateTime):
+    for car in cars:
+        car.run(serverId, time)
+    edgeServer.run(time)
