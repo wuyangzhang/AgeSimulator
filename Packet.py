@@ -23,6 +23,8 @@ class Packet:
     def getAge(self):
         return self.age
 
+    def getTimeStamp(self):
+        return self.timestamp
+
     def addAging(self, agingTime):
         self.age += agingTime
-        self.timestamp += agingTime

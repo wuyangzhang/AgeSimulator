@@ -16,7 +16,14 @@ def plotSingleCurve(vals, xlabel = None, ylabel = None):
     ax.spines['top'].set_linestyle('--')
     ax.spines['top'].set_color('#91989F')
 
+    ax.tick_params(axis='x', colors='#91989F')
+    ax.tick_params(axis='y', colors='#91989F')
+
     # ax.spines['top'].set_visible(False)
     # ax.spines['right'].set_visible(False)
     plt.grid(linestyle='dotted')
+    if xlabel:
+        plt.xlabel(xlabel)
+    if ylabel:
+        plt.ylabel(ylabel)
     plt.show()

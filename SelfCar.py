@@ -5,7 +5,7 @@ class SelfCar:
 
     def __init__(self, carId, startTime, endTime, resolution, speed, sendingInterval, channel):
         self.carId = carId
-        self.ageList = []
+        self.ageList = [0]
         self.startTime = startTime
         self.endTime = endTime
         self.resolution = resolution
@@ -17,19 +17,23 @@ class SelfCar:
         self.updates = []
         self.latencies = {}
         self.sendSlots = set()
+
         time = startTime
         while time < endTime:
             self.sendSlots.add(time)
             time += sendingInterval
 
     def run(self, serverId, timeSlot):
+        if self.startTime <= timeSlot:
+            self.ageList.append(self.ageList[-1]+1)
+
         if timeSlot in self.sendSlots:
             self.sendPacket(serverId, timeSlot)
 
     def sendPacket(self, serverId, timeSlot):
         packet = self.generatePacket(serverId, timeSlot)
         self.updateLatency(packet)
-        self.channel.forwardPacket(serverId, packet)
+        self.channel.receivePacket(packet)
 
     def generatePacket(self, serverId, time):
         self.requestId += 1
@@ -49,6 +53,10 @@ class SelfCar:
     def receivePacket(self, packet):
         self.updates.append(packet)
         self.updateLatency(packet)
+        self.updateAge(packet)
+
+    def updateAge(self, packet):
+        self.ageList.append(packet.age)
 
     def updateLatency(self, packet):
         packetId, endTime = packet.packetId, packet.timestamp
@@ -61,3 +69,6 @@ class SelfCar:
 
     def getEnd2EndLatency(self):
         return [x[2] for x in self.latencies.values()]
+
+    def getAgeHist(self):
+        return self.ageList[:600]
