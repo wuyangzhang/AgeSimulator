@@ -71,4 +71,4 @@ class SelfCar:
         return [x[2] for x in self.latencies.values()]
 
     def getAgeHist(self):
-        return self.ageList[:600]
+        return self.ageList[:]

@@ -1,5 +1,6 @@
 import numpy as np
 from Packet import Packet
+import random
 
 class EdgeServer:
 
@@ -11,12 +12,12 @@ class EdgeServer:
         self.pendingPackets = []
         self.carWaitingRooms = {}
         self.isBusy = [False for _ in range(totalSimulationTime)]
-        self.policyList = ('FIFO', 'FCLS', 'minAge', 'maxAge', 'maxCarAgeDrop')
-        self.policy = 'maxAge'
+        self.policyList = ('FIFO', 'FCLS', 'minAge', 'maxAge', 'maxCarAgeDrop', 'randomPick')
+        self.policy = self.policyList[4]
         self.isPreemption = True
         self.carLastUpdateTimeStamp = {}
         self.time = 0
-        np.random.seed(1)
+        np.random.seed(2)
 
     def run(self, time):
         self.time = time
@@ -46,13 +47,16 @@ class EdgeServer:
                 self.carWaitingRooms[packet.srcId] = [packet]
             else:
                 prevPacket = self.carWaitingRooms[packet.srcId][0]
-                for packet in self.pendingPackets:
-                    if packet == prevPacket:
-                        self.pendingPackets.remove(packet)
+                for p in self.pendingPackets:
+                    if p == prevPacket:
+                        self.pendingPackets.remove(p)
                         break
                 self.carWaitingRooms[packet.srcId][0] = packet
 
         self.pendingPackets.append(packet)
+
+    def randomPick(self):
+        return random.choice(self.pendingPackets)
 
     def FIFO(self):
         return self.pendingPackets[0]
@@ -111,6 +115,8 @@ class EdgeServer:
             packet = self.minCarAge()
         elif policy == 'maxCarAgeDrop':
             packet = self.maxCarAgeDrop()
+        elif policy == 'randomPick':
+            packet = self.randomPick()
 
         self.pendingPackets.remove(packet)
         return packet
