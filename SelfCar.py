@@ -1,5 +1,6 @@
 from Packet import Packet
-
+import numpy as np
+import random
 
 class SelfCar:
 
@@ -20,8 +21,9 @@ class SelfCar:
 
         time = startTime
         while time < endTime:
-            self.sendSlots.add(time)
+            self.sendSlots.add(time) # + random.randint(-10, 10))
             time += sendingInterval
+            # time += max(1, int(np.random.exponential(scale=sendingInterval, size=1)[0]))
 
     def run(self, serverId, timeSlot):
         if self.startTime <= timeSlot:
@@ -72,3 +74,6 @@ class SelfCar:
 
     def getAgeHist(self):
         return self.ageList[:]
+
+    def getAverageAge(self):
+        return sum(self.ageList[:]) / len(self.ageList[:])
