@@ -3,11 +3,15 @@ import numpy as np
 from channel import Channel
 from edgeServer import EdgeServer
 from SelfCar import SelfCar
-from PlotHelper import plotSingleCurve, plotAvgAOI, plotSampleAge, plotBox
+from PlotHelper import plotSingleCurve, plotAvgAOI, plotSampleAge, plotBox, plotFairness, plotFairnessCnt, plotAvgPenalty
 import matplotlib.pyplot as plt
 import json
 import glob
 import time
+
+import matplotlib.style
+import matplotlib as mpl
+mpl.style.use('default')
 
 resolutions = [720, 1080, 2000, 4000]
 speeds = [x for x in range(10, 100, 10)] # priority?
@@ -15,7 +19,7 @@ intervals = [x for x in range(10, 50, 10)] # fps
 
 # random.seed(10)
 
-policyList = ('maxCarAgeDrop', 'FIFO', 'LCFS', 'maxAge', 'randomPick')
+policyList = ('maxPenalty', 'FIFO', 'LCFS', 'maxAge', 'randomPick')
 
 class Simulation:
     def __init__(self, carNum = 10, serverProcessRate=5, trafficRate=20):
@@ -37,10 +41,17 @@ class Simulation:
                           resolution = 720,
                           speed = 10,
                           sendingInterval =  self.trafficRate, #+ random.randint(1, 20), #fps self.trafficRate,
+                          # sendingInterval = (i+1) * self.trafficRate,
                           channel = self.channel)
 
             self.instanceIdMapping[i] = car
             self.cars.append(car)
+
+    def collectServiceCount(self):
+        res = []
+        for car in self.cars:
+            res.append(car.receiveCount)
+        return res
 
     def initServer(self, processRate = 1):
         self.edgeServer = EdgeServer(self.serverId, self.channel, self.totalSimulateTime, processRate)
@@ -54,7 +65,7 @@ class Simulation:
     def runSimulate(self, policy):
         # start simulate!
         for time in range(self.totalSimulateTime):
-            random.shuffle(self.cars)
+            # random.shuffle(self.cars)
             for car in self.cars:
                 car.run(self.serverId, time)
             self.channel.run(time)
@@ -75,7 +86,7 @@ class Simulation:
         return res
 
 
-def find_avg_aoi(path):
+def find_avg_aoi(path, isSingle = 0):
 
     policyList = ['maxCarAgeDrop', 'FIFO', 'LCFS', 'maxAge', 'randomPick']
     results = {}
@@ -84,18 +95,25 @@ def find_avg_aoi(path):
             aoi_policy_dic = json.load(f)
 
         policy_aoi = {}
-        for policy in aoi_policy_dic:
+        if not isSingle:
+            for policy in aoi_policy_dic:
+                res = []
+                for car in aoi_policy_dic[policy]:
+                    res += car
+                policy_aoi[policy] = sum(res) / len(res)
+                # policy_aoi[policy] = res
+                #print('file {}, age list {}'.format(file, res))
+            results[file] = policy_aoi
+        else:
             res = []
-            # res = 0
-            for car in aoi_policy_dic[policy]:
-                res += car
-            policy_aoi[policy] = sum(res) / len(res)
+            for i, car in  enumerate(aoi_policy_dic['maxCarAgeDrop']):
+                res.append(sum(car) / len(car))
+            results[file.split('_')[1]] = res
             # policy_aoi[policy] = res
-            #print('file {}, age list {}'.format(file, res))
-        results[file] = policy_aoi
-
-    with open(path + '.log', 'w+') as file:
+            # print('file {}, age list {}'.format(file, res))
+    with open(path + '.log', 'w') as file:
         file.write(json.dumps(results))
+
 
 def find_avg_penalty(path):
 
@@ -116,23 +134,28 @@ def find_avg_penalty(path):
             #print('file {}, age list {}'.format(file, res))
         results[file] = policy_aoi
 
-    with open(path + '.log', 'w+') as file:
+    with open(path + '.log', 'w') as file:
         file.write(json.dumps(results))
 
-def testServerProcessRate(testServerProcessRateRange):
+def testServerProcessRate(testServerProcessRateRange, isPenalty = 0):
 
     for i in testServerProcessRateRange:
-
         print("Processing Rate: ", i)
         res = {}
         for policy in policyList:
             # print(policy)
             simulation = Simulation(carNum=5, serverProcessRate=i)
             simulation.runSimulate(policy)
-            res[policy] = simulation.collectAOI()
-
-        with open('processRate_' + str(i) + '_ms.log', 'w+') as file:
-            file.write(json.dumps(res))
+            if not isPenalty:
+                res[policy] = simulation.collectAOI()
+            else:
+                res[policy] = simulation.collectPenalty()
+        if not isPenalty:
+            with open('processRate_' + str(i) + '_ms.log', 'w') as file:
+                file.write(json.dumps(res))
+        else:
+            with open('penaltyProcessRate_' + str(i) + '_ms.log', 'w') as file:
+                file.write(json.dumps(res))
 
 
 def testTrafficRate(testTrafficRateRange):
@@ -145,9 +168,28 @@ def testTrafficRate(testTrafficRateRange):
             simulation = Simulation(carNum=5, serverProcessRate=10, trafficRate=i)
             simulation.runSimulate(policy)
             res[policy] = simulation.collectAOI()
-        with open('trafficRate_' + str(i) + '_ms.log', 'w+') as file:
+        with open('trafficRate_' + str(i) + '_ms.log', 'w') as file:
             file.write(json.dumps(res))
 
+def testFairness(testFairnessRange):
+
+    serviceCount = []
+    for i in testFairnessRange:
+        print("Processing Rate: ", i)
+        res = {}
+        policy = "maxCarAgeDrop"
+        simulation = Simulation(carNum=5, serverProcessRate=i, trafficRate=10)
+        simulation.runSimulate(policy)
+        res[policy] = simulation.collectAOI()
+        cnts = simulation.collectServiceCount()
+        total = sum(cnts)
+        for j, cnt in enumerate(cnts):
+            cnts[j] = cnts[j] / total
+        serviceCount.append(cnts)
+        with open('fairnessAge_' + str(i) + '_ms.log', 'w') as file:
+            file.write(json.dumps(res))
+    with open('fairnessCnt.log', 'w') as file:
+        file.write(json.dumps(serviceCount))
 
 def testUserNum():
     for i in [2, 4, 6, 8, 10, 12, 14, 16]:
@@ -158,7 +200,7 @@ def testUserNum():
             simulation.runSimulate(policy)
             res[policy] = simulation.collectAOI()
 
-        with open('userCnt_' + str(i) + '_ms.log', 'w+') as file:
+        with open('userCnt_' + str(i) + '_ms.log', 'w') as file:
             file.write(json.dumps(res))
 
 
@@ -169,7 +211,7 @@ def printSampleAge(carNum=2):
     simulation.runSimulate(policy)
     res = simulation.collectAOI()
 
-    with open('sampleAge.log', 'w+') as file:
+    with open('sampleAge.log', 'w') as file:
         file.write(json.dumps(res))
 
 
@@ -179,22 +221,39 @@ Main Simulation
 
 startTime = time.time()
 
-# """Varying server processing rate"""
-# testServerProcessRateRange = [2 * (i + 1) for i in range(10)]
+"""Varying server processing rate"""
+testServerProcessRateRange = [2 * (i + 1) for i in range(10)]
 # testServerProcessRate(testServerProcessRateRange)
 # find_avg_aoi('processRate')
-# plotAvgAOI('processRate.log', testServerProcessRateRange, 'Average Server Processing Time (ms)', 'Average AOI (ms)')
+# plotAvgAOI('processRate.log', testServerProcessRateRange, 'Average Server Processing Time (ms)', 'Average Age (ms)')
 
-# """Varying traffic rate from each user"""
-# testTrafficRateRange = [10 * (i + 1) for i in range(6)]
+"""Varying traffic rate from each user"""
+testTrafficRateRange = [10 * (i + 1) for i in range(6)]
 # testTrafficRate(testTrafficRateRange)
 # find_avg_aoi('trafficRate')
 # plotAvgAOI('trafficRate.log',testTrafficRateRange, 'Average User Inter-Update Time (ms)', 'Average Age (ms)')
 
+"""Varying the user count"""
 # testUserNum()
 # find_avg_aoi('userCnt')
-plotAvgAOI('userCnt.log', [2, 4, 6, 8, 10, 12, 14, 16] , 'Total User Count', 'Average AOI (ms)')
+# plotAvgAOI('userCnt.log', [2, 4, 6, 8, 10, 12, 14, 16] , 'Total User Count', 'Average Age (ms)')
 
+
+"""Fairness between two users by different processing rate"""
+testFairnessRange = [5 * (i + 1) for i in range(10)]
+# testFairness(testFairnessRange)
+# find_avg_aoi('fairnessAge', isSingle = 1)
+# plotFairness('fairnessAge.log', testFairnessRange, 'Average Server Processing Time (ms)', 'Signel User Average Age (ms)')
+# plotFairnessCnt('fairnessCnt.log', testFairnessRange, 'Average Server Processing Time (ms)', 'User Service Fraction')
+
+
+"""Evaluate penalty"""
+testServerProcessRateRange = [2 * (i + 1) for i in range(7)]
+# testServerProcessRate(testServerProcessRateRange, isPenalty=1)
+# find_avg_penalty('penaltyProcessRate')
+plotAvgPenalty('penaltyProcessRate.log', testServerProcessRateRange, 'Average Server Processing Time (ms)', 'Penalty')
+
+"""Backup Below"""
 
 # printSampleAge(2)
 # plotSampleAge('sampleAge.log', 'time slot', 'AOI (ms)')

@@ -2,7 +2,8 @@ import numpy as np
 from Packet import Packet
 import random
 
-# np.random.seed(2)
+
+np.random.seed(2)
 
 class EdgeServer:
 
@@ -114,7 +115,7 @@ class EdgeServer:
             if packet.srcId not in self.carLastUpdateTimeStamp:
                 self.carLastUpdateTimeStamp[packet.srcId] = packet.timestamp
             tempAge = self.time - self.carLastUpdateTimeStamp[packet.srcId]
-            penalty = np.exp(0.1 * tempAge) - np.exp(0.1 * (self.time-packet.timestamp))
+            penalty = np.exp(0.05 * tempAge) - np.exp(0.05 * (self.time-packet.timestamp))
             if penalty >= maxPen:
                 maxPen = penalty
                 nextPacket = packet

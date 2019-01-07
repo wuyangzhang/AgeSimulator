@@ -18,6 +18,7 @@ class SelfCar:
         self.updates = []
         self.latencies = {}
         self.sendSlots = set()
+        self.receiveCount = 0
 
         time = startTime
         while time < endTime:
@@ -56,6 +57,7 @@ class SelfCar:
         self.updates.append(packet)
         self.updateLatency(packet)
         self.updateAge(packet)
+        self.receiveCount += 1
 
     def updateAge(self, packet):
         self.ageList.append(packet.age)
@@ -81,5 +83,5 @@ class SelfCar:
     def getPenaltyList(self):
         penList = []
         for i in self.ageList:
-            penList.append(np.exp(0.1*i))
+            penList.append(np.exp(0.05*i))
         return penList
