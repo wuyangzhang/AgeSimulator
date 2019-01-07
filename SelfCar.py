@@ -22,8 +22,8 @@ class SelfCar:
         time = startTime
         while time < endTime:
             self.sendSlots.add(time) # + random.randint(-10, 10))
-            time += sendingInterval
-            # time += max(1, int(np.random.exponential(scale=sendingInterval, size=1)[0]))
+            # time += sendingInterval # Fixed sending interval
+            time += max(1, int(np.random.exponential(scale=sendingInterval, size=1)[0])) # Random Exponential sending interval
 
     def run(self, serverId, timeSlot):
         if self.startTime <= timeSlot:
@@ -77,3 +77,9 @@ class SelfCar:
 
     def getAverageAge(self):
         return sum(self.ageList[:]) / len(self.ageList[:])
+
+    def getPenaltyList(self):
+        penList = []
+        for i in self.ageList:
+            penList.append(np.exp(0.1*i))
+        return penList

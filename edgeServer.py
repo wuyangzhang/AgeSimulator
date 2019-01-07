@@ -14,7 +14,7 @@ class EdgeServer:
         self.pendingPackets = []
         self.carWaitingRooms = {}
         self.isBusy = [False for _ in range(totalSimulationTime)]
-        self.policyList = ('FIFO', 'LCFS', 'minAge', 'maxAge', 'maxCarAgeDrop', 'randomPick')
+        self.policyList = ('FIFO', 'LCFS', 'minAge', 'maxAge', 'maxCarAgeDrop', 'randomPick', 'maxPenalty')
         self.policy = self.policyList[4]
         self.isPreemption = True
         self.carLastUpdateTimeStamp = {}
@@ -107,6 +107,19 @@ class EdgeServer:
                 nextPacket = packet
         return nextPacket
 
+    def maxPenalty(self): # only works for Exponential with a = 0.1
+        nextPacket = None
+        maxPen = -float('inf')
+        for packet in self.pendingPackets:
+            if packet.srcId not in self.carLastUpdateTimeStamp:
+                self.carLastUpdateTimeStamp[packet.srcId] = packet.timestamp
+            tempAge = self.time - self.carLastUpdateTimeStamp[packet.srcId]
+            penalty = np.exp(0.1 * tempAge) - np.exp(0.1 * (self.time-packet.timestamp))
+            if penalty >= maxPen:
+                maxPen = penalty
+                nextPacket = packet
+        return nextPacket
+
     def getNextPacket(self, policy):
         packet = None
         if policy == 'FIFO':
@@ -125,6 +138,8 @@ class EdgeServer:
             packet = self.maxCarAgeDrop()
         elif policy == 'randomPick':
             packet = self.randomPick()
+        elif policy == 'maxPenalty':
+            packet = self.maxPenalty()
 
         self.pendingPackets.remove(packet)
         return packet

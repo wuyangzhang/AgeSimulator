@@ -100,7 +100,7 @@ def plotAvgAOI(path, xticks = None, xlabel = None, ylabel = None):
     if ylabel:
         plt.ylabel(ylabel)
 
-    plt.savefig('result.svg', format='svg', dpi = 300)
+    plt.savefig('result.eps', format='eps', dpi = 300)
     plt.show()
 
 def plotSampleAge(path, xticks = None, xlabel = None, ylabel = None):

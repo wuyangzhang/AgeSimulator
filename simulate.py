@@ -18,7 +18,7 @@ intervals = [x for x in range(10, 50, 10)] # fps
 policyList = ('maxCarAgeDrop', 'FIFO', 'LCFS', 'maxAge', 'randomPick')
 
 class Simulation:
-    def __init__(self, carNum = 10, serverProcessRate=5, trafficRate=50):
+    def __init__(self, carNum = 10, serverProcessRate=5, trafficRate=20):
         self.cars = []
         self.instanceIdMapping = {}
         self.channel = None
@@ -67,6 +67,13 @@ class Simulation:
             # res.append(self.cars[i].getAverageAge())
         return res
 
+    def collectPenalty(self):
+        res = []
+        for i in range(len(self.cars)):
+            # res.append(self.cars[i].ageList)
+            res.append(self.cars[i].getPenaltyList())
+        return res
+
 
 def find_avg_aoi(path):
 
@@ -90,13 +97,37 @@ def find_avg_aoi(path):
     with open(path + '.log', 'w+') as file:
         file.write(json.dumps(results))
 
-def testServerProcessRate():
+def find_avg_penalty(path):
 
-    for i in [1, 2, 5, 10, 20, 33]:
+    policyList = ['maxPenalty', 'FIFO', 'LCFS', 'maxAge', 'randomPick']
+    results = {}
+    for file in glob.glob(path + '_*'):
+        with open(file) as f:
+            aoi_policy_dic = json.load(f)
+
+        policy_aoi = {}
+        for policy in aoi_policy_dic:
+            res = []
+            # res = 0
+            for car in aoi_policy_dic[policy]:
+                res += car
+            policy_aoi[policy] = sum(res) / len(res)
+            # policy_aoi[policy] = res
+            #print('file {}, age list {}'.format(file, res))
+        results[file] = policy_aoi
+
+    with open(path + '.log', 'w+') as file:
+        file.write(json.dumps(results))
+
+def testServerProcessRate(testServerProcessRateRange):
+
+    for i in testServerProcessRateRange:
+
+        print("Processing Rate: ", i)
         res = {}
         for policy in policyList:
-            print(policy)
-            simulation = Simulation(carNum=10, serverProcessRate=i)
+            # print(policy)
+            simulation = Simulation(carNum=5, serverProcessRate=i)
             simulation.runSimulate(policy)
             res[policy] = simulation.collectAOI()
 
@@ -120,9 +151,10 @@ def testTrafficRate(testTrafficRateRange):
 
 def testUserNum():
     for i in [2, 4, 6, 8, 10, 12, 14, 16]:
+        print("User Cnt: ", i)
         res = {}
         for policy in policyList:
-            simulation = Simulation(carNum=i, serverProcessRate=10, trafficRate=30)
+            simulation = Simulation(carNum=i, serverProcessRate=10, trafficRate=20)
             simulation.runSimulate(policy)
             res[policy] = simulation.collectAOI()
 
@@ -141,22 +173,27 @@ def printSampleAge(carNum=2):
         file.write(json.dumps(res))
 
 
+"""
+Main Simulation
+"""
+
 startTime = time.time()
 
-#
-# testServerProcessRate()
+# """Varying server processing rate"""
+# testServerProcessRateRange = [2 * (i + 1) for i in range(10)]
+# testServerProcessRate(testServerProcessRateRange)
 # find_avg_aoi('processRate')
-# plotAvgAOI('processRate.log', [1, 2, 5, 10, 20, 33] , 'edge server processing rate for a single frame (ms)', 'average AOI (ms)')
+# plotAvgAOI('processRate.log', testServerProcessRateRange, 'Average Server Processing Time (ms)', 'Average AOI (ms)')
 
-"""Varying traffic rate from each user"""
-testTrafficRateRange = [10 * (i + 1) for i in range(6)]
-testTrafficRate(testTrafficRateRange)
-find_avg_aoi('trafficRate')
-plotAvgAOI('trafficRate.log',testTrafficRateRange, 'Average User Inter-Update Time (ms)', 'Average Age (ms)')
+# """Varying traffic rate from each user"""
+# testTrafficRateRange = [10 * (i + 1) for i in range(6)]
+# testTrafficRate(testTrafficRateRange)
+# find_avg_aoi('trafficRate')
+# plotAvgAOI('trafficRate.log',testTrafficRateRange, 'Average User Inter-Update Time (ms)', 'Average Age (ms)')
 
 # testUserNum()
 # find_avg_aoi('userCnt')
-# plotAvgAOI('userCnt.log', [2, 4, 6, 8, 10, 12, 14, 16] , 'total user count', 'average AOI (ms)')
+plotAvgAOI('userCnt.log', [2, 4, 6, 8, 10, 12, 14, 16] , 'Total User Count', 'Average AOI (ms)')
 
 
 # printSampleAge(2)
@@ -164,9 +201,6 @@ plotAvgAOI('trafficRate.log',testTrafficRateRange, 'Average User Inter-Update Ti
 
 # printSampleAge(10)
 # plotBox('sampleAge.log', 'user id', 'AOI (ms)')
-
-
-
 
 
 
