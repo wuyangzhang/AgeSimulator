@@ -45,15 +45,16 @@ def plotSingleCurve(vals, xlabel = None, ylabel = None):
 def plotAvgAOI(path, xticks = None, xlabel = None, ylabel = None):
 
 
-    font = {'family': 'sans-serif',
+    font = {
+            # 'family': 'sans-serif',
             'weight': 'bold',
             'size': 18}
-
+    plt.figure(figsize=(7, 4.5))
     plt.rc('font', **font)
 
-    policyList = ('maxCarAgeDrop', 'FIFO', 'LCFS', 'maxAge', 'randomPick')
-    policyNameList = ('MWAR', 'FCFS', 'LCFS', 'MAF', 'random')
-    markerList = ("", "s", "v", ".", "^" )
+    policyList = ('FIFO', 'randomPick', 'LCFS', 'maxAge', 'maxCarAgeDrop')
+    policyNameList = ('FCFS', 'random', 'LCFS', 'MAF', 'MWAR')
+    markerList = ("^", "s", "v", ".", "" )
     with open(path) as f:
         aoi_policy_dic = json.load(f)
 
@@ -77,7 +78,7 @@ def plotAvgAOI(path, xticks = None, xlabel = None, ylabel = None):
             vals[policy].append(aoi_policy_dic[key][policy])
 
 
-    x = [_  for _ in range(len(vals[policyList[0]]))]
+    x = [ i for i in range(len(vals[policyList[0]]))]
 
     ax = plt.gca()
     ax.spines['left'].set_linestyle('-.')
@@ -105,11 +106,12 @@ def plotAvgAOI(path, xticks = None, xlabel = None, ylabel = None):
         plt.plot(x, vals[policy], label = policyNameList[i], linewidth=3, alpha=0.8, marker=markerList[i], markersize=10)
 
     plt.legend(loc='lower right')
-    # plt.ylim((30, 85))
+    # plt.ylim((4, 8.1))
     if xlabel:
         plt.xlabel(xlabel)
     if ylabel:
         plt.ylabel(ylabel)
+
 
     plt.tight_layout()
     plt.savefig(path + '.eps', format='eps', dpi = 300)
@@ -299,7 +301,7 @@ def plotFairness(path, xticks = None, xlabel = None, ylabel = None):
     font = {'family': 'normal',
             'weight': 'bold',
             'size': 18}
-
+    plt.figure(figsize=(7, 4.5))
     plt.rc('font', **font)
 
     ax = plt.gca()
@@ -323,11 +325,11 @@ def plotFairness(path, xticks = None, xlabel = None, ylabel = None):
     plt.grid(linestyle='dotted')
 
     for i, car in enumerate(cars):
-        plt.plot(np.arange(len(xticks)), car, label = 'User' + str(i+1), linewidth=3, alpha=0.8)#, marker=markerList[i], markersize=12)
+        plt.plot(np.arange(xticks), car, label = 'User' + str(i+1), linewidth=3, alpha=0.8)#, marker=markerList[i], markersize=12)
 
     if xticks:
         plt.xticks(np.arange(len(xticks)), xticks)
-    plt.legend(loc='upper left')
+    plt.legend(loc='upper left', fontsize='small' )
 
     if xlabel:
         plt.xlabel(xlabel)
@@ -348,9 +350,9 @@ def plotFairnessCnt(path, xticks = None, xlabel = None, ylabel = None):
             car.append(rate[i])
 
     font = {'family': 'normal',
-            'weight': 'bold',
+            # 'weight': 'bold',
             'size': 18}
-
+    plt.figure(figsize=(7, 4.5))
     plt.rc('font', **font)
 
     ax = plt.gca()
@@ -373,12 +375,12 @@ def plotFairnessCnt(path, xticks = None, xlabel = None, ylabel = None):
     plt.grid(linestyle='dotted')
 
     for i, car in enumerate(cars):
-        plt.plot(np.arange(len(xticks)), car, label='User' + str(i + 1), linewidth=3,
+        plt.plot(np.arange(xticks), car, label='User' + str(i + 1), linewidth=3,
                  alpha=0.8)  # , marker=markerList[i], markersize=12)
 
     if xticks:
         plt.xticks(np.arange(len(xticks)), xticks)
-    plt.legend(loc='upper right')
+    plt.legend(loc='upper right', fontsize='small' )
 
     ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
     if xlabel:

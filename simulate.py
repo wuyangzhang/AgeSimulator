@@ -231,27 +231,27 @@ testServerProcessRateRange = [2 * (i + 1) for i in range(10)]
 testTrafficRateRange = [10 * (i + 1) for i in range(6)]
 # testTrafficRate(testTrafficRateRange)
 # find_avg_aoi('trafficRate')
-# plotAvgAOI('trafficRate.log',testTrafficRateRange, 'Average User Inter-Update Time (ms)', 'Average Age (ms)')
+plotAvgAOI('trafficRate.log',testTrafficRateRange, "$1/{\lambda}$", 'Average Age')
 
 """Varying the user count"""
 # testUserNum()
 # find_avg_aoi('userCnt')
-# plotAvgAOI('userCnt.log', [2, 4, 6, 8, 10, 12, 14, 16] , 'Total User Count', 'Average Age (ms)')
+# plotAvgAOI('userCnt.log', [2, 4, 6, 8, 10, 12, 14, 16] , 'Total User Count', 'Average Age')
 
 
 """Fairness between two users by different processing rate"""
 testFairnessRange = [5 * (i + 1) for i in range(10)]
 # testFairness(testFairnessRange)
 # find_avg_aoi('fairnessAge', isSingle = 1)
-# plotFairness('fairnessAge.log', testFairnessRange, 'Average Server Processing Time (ms)', 'Signel User Average Age (ms)')
-# plotFairnessCnt('fairnessCnt.log', testFairnessRange, 'Average Server Processing Time (ms)', 'User Service Fraction')
+# plotFairness('fairnessAge.log', testFairnessRange, '$1/{\mu}$', 'Individual Average Age')
+# plotFairnessCnt('fairnessCnt.log', testFairnessRange, '$1/{\mu}$', 'User Service Fraction')
 
 
 """Evaluate penalty"""
 testServerProcessRateRange = [2 * (i + 1) for i in range(7)]
 # testServerProcessRate(testServerProcessRateRange, isPenalty=1)
 # find_avg_penalty('penaltyProcessRate')
-plotAvgPenalty('penaltyProcessRate.log', testServerProcessRateRange, 'Average Server Processing Time (ms)', 'Penalty')
+# plotAvgPenalty('penaltyProcessRate.log', testServerProcessRateRange, 'Average Server Processing Time (ms)', 'Penalty')
 
 """Backup Below"""
 
